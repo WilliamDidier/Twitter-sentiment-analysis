@@ -15,7 +15,9 @@ def main(args):
     
     with jsonlines.open(args.input) as reader:
         with jsonlines.open(args.output, "w") as writer:
-            for tweet in reader:
+            i = 0
+            while i < args.limit:
+                tweet = reader.read()
                 # Preprocess the tweet text
                 text = preprocess_tweet(tweet)
                 # Turn it into an input vector
@@ -24,15 +26,20 @@ def main(args):
                 # Feed it into the model
                 sentiment = model.predict(vector) 
                 # Register the sentiment
-                tweet["sentiment"] = int(np.argmax(sentiment[0]))
+                #tweet["sentiment"] = int(np.round(sentiment[0]))
+                tweet["sentiment"] = float(sentiment[0])
                 # Register the tweet into the writer
                 writer.write(tweet)
+                i += 1
+                if i%500000==0:
+                    print(i)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=argparse.FileType("rb"))
     parser.add_argument("--tokenizer", \
     type=argparse.FileType("rb"))
+    parser.add_argument("--limit","-l",type=int)
     parser.add_argument("--input","-i")
     parser.add_argument("--output","-o")
     args = parser.parse_args()

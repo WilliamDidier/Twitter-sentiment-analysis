@@ -10,7 +10,7 @@ def main(args):
     config_dict = json.load(args.config)
     # Dictionnary storing the text so that 
     # you don't extract two times the same text
-    reminder = dict()
+    reminder = set()
     with jsonlines.open(args.input) as reader:
         with jsonlines.open(args.output, "w") as writer:
             # Only fetch the wanted hashtags ( specified in the config file ) and label the tweet for (1) or against (0)
@@ -51,20 +51,25 @@ def main(args):
                         if text == informative_against:
                             against_flag = True
 
-                    if against_flag ^ for_flag:
-                        # Means we are going to choose
-                        # this tweet and label it
-                        # sentiment = 1 if the tweet supports 
-                        # brexit and 0 otherwise
-                        sentiment = [1, 0][against_flag]
-                        tweet["sentiment"] = sentiment
-                        # Check that we have not already chosen it
-                        if tweet["full_text"] not in reminder:
-                            writer.write(tweet)
-                            reminder[tweet["full_text"]] = 1
-                            # Increase the count of tweets 
-                            # in the training set
-                            i += 1
+                # Only select the tweet if it has
+                # one type of flag active
+                if against_flag ^ for_flag:
+                    # Means we are going to choose
+                    # this tweet and label it
+                    # sentiment = 1 if the tweet supports 
+                    # brexit and 0 otherwise
+                    sentiment = [1, 0][against_flag]
+                    tweet["sentiment"] = sentiment
+                    # Check that we have not already chosen it
+                    code = hash(tweet["full_text"])
+                    if code not in reminder:
+                        writer.write(tweet)
+                        reminder.add(code)
+                        # Increase the count of tweets 
+                        # in the training set
+                        i += 1
+                        if i%10000 == 0:
+                            print(i)
     return
 
 if __name__ == '__main__':

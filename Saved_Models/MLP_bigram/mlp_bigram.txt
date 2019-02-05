@@ -1,0 +1,31 @@
+- On 204 000 training size:
+
+Test accuracy: 0.8165000490110365
+
+Recall Leave: 0.9087178307060945
+Precision Leave: 0.8226164849663218
+F1 Score Leave: 0.8635261958997723
+
+Recall Stay: 0.6533686138815388
+Precision Stay: 0.8018318068276437
+F1 Score Stay: 0.7200269168940895
+
+    On 1000000 labeled tweets:
+    
+    User mean sentiment: 0.558285951224627
+    Tweet mean sentiment: 0.693918
+
+- On bit less but more quality:
+
+Test accuracy: 0.8247094964653082
+
+Recall Leave: 0.9046212719936775
+Precision Leave: 0.8359149786677942
+
+Recall Stay: 0.6812751978497835
+Precision Stay: 0.7991767384830969
+
+    On 1000000 labeled tweets:
+    
+    User mean sentiment: 0.558285951224627
+    Tweet mean sentiment: 0.693918

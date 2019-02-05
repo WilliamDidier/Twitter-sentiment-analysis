@@ -8,8 +8,9 @@ import tensorflow as tf
 from sklearn.utils import class_weight
 from preprocessing import get_doc_list
 from keras.models import Sequential
-from keras.layers import Embedding, Dense, Dropout
+from keras.layers import Dense, Dropout
 from sklearn.model_selection import train_test_split
+from create_tokenizer import StemmedCountVectorizer
 
 def batch_generator(X, y, batch_size):
     """
@@ -38,7 +39,17 @@ def batch_generator(X, y, batch_size):
             i = 0
         yield(X_batch,y_batch)
 
-     
+def simple_mlp_model(input_shape):
+    # Create the keras model
+    model = Sequential()
+    model.add(Dropout(0.3, input_shape=(input_shape,)))
+    model.add(Dense(100, activation="relu"))
+    model.add(Dropout(0.3))
+    model.add(Dense(1, activation="sigmoid"))
+    model.compile(optimizer="adam", \
+    loss='binary_crossentropy',\
+    metrics=['accuracy'])
+    return model
 
 def main(args):
     
@@ -49,19 +60,15 @@ def main(args):
 
     batch_size = 128
 
-    # Create the keras model
-    model = Sequential()
-    model.add(Dropout(0.3, input_shape=(encoded_docs.shape[1],)))
-    model.add(Dense(100, activation="relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(1, activation="sigmoid"))
-    model.compile(optimizer="adam", \
-    loss='binary_crossentropy',\
-    metrics=['accuracy'])
+    model = simple_mlp_model(encoded_docs.shape[1])
 
     # Split into test/training data
-    X_train, X_test, y_train, y_test = \
+    X_train_val, X_test, y_train_val, y_test = \
     train_test_split(encoded_docs, labels, test_size=0.20)
+
+    # Split into training/validation data
+    X_train, X_val, y_train, y_val = \
+    train_test_split(X_train_val, y_train_val, test_size=0.10)
 
     print(model.summary())
 
@@ -73,13 +80,19 @@ def main(args):
 
     # Train
     try:
-        model.fit_generator(generator=batch_generator(X_train, y_train, batch_size), \
-        epochs=20,\
+        history = model.fit_generator(\
+        generator=batch_generator(X_train, y_train, batch_size), \
+        epochs=10,\
         steps_per_epoch=X_train.shape[0]//batch_size,\
+        validation_data=(X_val, y_val),\
         class_weight = class_weights,\
         use_multiprocessing=True, workers=4)
     except KeyboardInterrupt:
+        history = False
         pass 
+    
+    if history:
+        evaluate.plot_metrics(history)
 
     # Compute the error on the test set
     test_loss, test_acc = model.evaluate(X_test, y_test)
